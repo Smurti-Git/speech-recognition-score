@@ -1,0 +1,216 @@
+### 1. Document Ready Event Listener
+javascript
+document.addEventListener("DOMContentLoaded", () => {
+
+This code ensures that the JavaScript inside the event listener runs only after the entire HTML document has been loaded. The DOMContentLoaded event is fired when the initial HTML document has been completely loaded and parsed.
+
+### 2. Variables Initialization
+javascript
+let recognition;
+let isListening = false;
+let textList = [];
+let totalScore = 0;
+
+- recognition: This variable will hold the SpeechRecognition object.
+- isListening: A boolean flag to check if the recognition is currently active.
+- textList: An array to store the list of text and scores.
+- totalScore: A variable to store the total score.
+
+### 3. Start Recognition Button Click Event
+javascript
+document.getElementById("start").addEventListener("click", () => {
+    if (isListening) {
+        if (recognition) {
+            recognition.stop();
+        }
+        isListening = false;
+        document.getElementById("start").innerText = "Start Recognition";
+    } else {
+        startRecognition();
+        isListening = true;
+        document.getElementById("start").innerText = "Stop Recognition";
+    }
+});
+
+- This event listener toggles the speech recognition process when the "Start Recognition" button is clicked.
+- If recognition is currently active (isListening is true), it stops the recognition and changes the button text to "Start Recognition".
+- If recognition is not active, it starts the recognition by calling the startRecognition function and changes the button text to "Stop Recognition".
+
+### 4. Copy Button Click Event
+javascript
+document.getElementById("copy").addEventListener("click", () => {
+    const textToCopy = document.getElementById("textareaInput").value;
+    if (textToCopy) {
+        navigator.clipboard.writeText(textToCopy)
+            .then(() => {
+                alert("Text copied successfully!");
+            })
+            .catch((err) => {
+                console.error("Error copying text: ", err);
+            });
+    } else {
+        alert("No text to copy!");
+    }
+});
+
+- This event listener handles copying the text from the text area to the clipboard when the "Copy" button is clicked.
+- It uses the Clipboard API to write the text to the clipboard and displays a success message.
+- If there is no text to copy, it shows an alert message.
+
+### 5. Clear Button Click Event
+javascript
+document.getElementById("clear").addEventListener("click", () => {
+    document.getElementById("textareaInput").value = "";
+    totalScore = 0;
+    document.getElementById("totalScore").textContent = `Total Score: ${totalScore}`;
+});
+
+- This event listener clears the text area and resets the total score when the "Clear" button is clicked.
+- It sets the value of the text area to an empty string and resets the totalScore to 0.
+- It updates the displayed total score.
+
+### 6. Form Submit Event
+javascript
+document.getElementById("inputForm").addEventListener("submit", (event) => {
+    event.preventDefault();
+    addToList();
+});
+
+- This event listener prevents the default form submission behavior and calls the addToList function to add a new text-score pair to the list.
+- The event.preventDefault() method stops the form from submitting and reloading the page.
+
+### 7. Start Recognition Function
+javascript
+function startRecognition() {
+    navigator.mediaDevices.getUserMedia({ audio: true })
+        .then((stream) => {
+            console.log("Microphone access granted");
+            recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.lang = "en-US";
+            recognition.interimResults = false;
+            recognition.continuous = false;
+            recognition.maxAlternatives = 1;
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                const resultElement = document.getElementById("textareaInput");
+                resultElement.value += ` ${transcript}`;
+                checkMatch();
+            };
+
+            recognition.onerror = (event) => {
+                console.error("Error occurred in recognition: ", event.error);
+            };
+
+            recognition.onend = () => {
+                if (isListening) {
+                    setTimeout(() => {
+                        recognition.start();
+                    }, 500);
+                } else {
+                    console.log("Recognition ended");
+                }
+            };
+
+            recognition.start();
+            console.log("Recognition started");
+        })
+        .catch((err) => {
+            console.error("Error getting user media: ", err.name, err.message);
+            alert("Microphone access is required for speech recognition. Please allow microphone access.");
+        });
+}
+
+- This function initializes the speech recognition process.
+- It requests microphone access using navigator.mediaDevices.getUserMedia.
+- If access is granted, it initializes the recognition object using the Web Speech API.
+- It sets the language to "en-US", disables interim results, sets continuous to false, and sets the maximum alternatives to 1.
+- The onresult event handler processes the recognized speech and updates the text area with the recognized transcript, then calls checkMatch to match the text.
+- The onerror event handler logs any errors that occur during recognition.
+- The onend event handler restarts the recognition if isListening is true, otherwise logs that recognition has ended.
+
+### 8. Add to List Function
+javascript
+window.addToList = function() {
+    const textInput = document.getElementById('textInput').value.trim();
+    const numberInput = document.getElementById('numberInput').value.trim();
+
+    // Validate inputs
+    if (textInput === '' || numberInput === '') {
+        return;
+    }
+
+    const listItem = document.createElement('li');
+    listItem.className = 'list-item';
+    listItem.innerHTML = `<span class="text">Text: ${textInput}</span> 
+                          <span class="score">Score: ${numberInput}</span> 
+                          <button onclick="removeItem(this)" style="margin-left: 10px;">&#10060;</button>`;
+
+    document.getElementById('list').appendChild(listItem);
+
+    textList.push({ text: textInput, score: parseInt(numberInput, 10) });
+
+    document.getElementById('inputForm').reset();
+    updateTotalScore();
+};
+
+- This function adds a new text-score pair to the list.
+- It trims the input values to remove any leading or trailing whitespace.
+- It validates the inputs to ensure both textInput and numberInput are not empty. If either is empty, it returns early.
+- It creates a new list item element with the text and score, including a remove button.
+- It appends the list item to the list and adds the text-score pair to the textList array.
+- It resets the form and calls updateTotalScore to update the displayed total score.
+
+### 9. Remove Item Function
+javascript
+window.removeItem = function(button) {
+    const listItem = button.parentElement;
+    const text = listItem.querySelector('.text').innerText.split(': ')[1];
+    textList = textList.filter(item => item.text !== text);
+    listItem.remove();
+    updateTotalScore();
+};
+
+- This function removes a text-score pair from the list.
+- It identifies the list item to be removed by getting the parent element of the clicked remove button.
+- It extracts the text value from the list item and filters it out from the textList array.
+- It removes the list item from the DOM and calls updateTotalScore to update the displayed total score.
+
+### 10. Check Match Function
+javascript
+window.checkMatch = function() {
+    const textareaValue = document.getElementById('textareaInput').value;
+    const listItems = document.querySelectorAll('.list-item');
+    totalScore = 0;
+
+    listItems.forEach(item => {
+        const textValue = item.querySelector('.text').innerText.split(': ')[1];
+        const scoreValue = parseInt(item.querySelector('.score').innerText.split(': ')[1], 10);
+
+        if (textareaValue.includes(textValue)) {
+            item.classList.add('highlight');
+            totalScore += scoreValue;
+        } else {
+            item.classList.remove('highlight');
+        }
+    });
+
+    updateTotalScore();
+};
+
+- This function checks if the recognized text matches any text in the list.
+- It gets the value of the text area and the list items.
+- It resets the totalScore to 0.
+- It iterates through the list items, extracts the text and score values, and checks if the text area value includes the text value.
+- If a match is found, it highlights the list item and adds the score value to the totalScore.
+- If no match is found, it removes the highlight from the list item.
+- It calls updateTotalScore to update the displayed total score.
+
+### 11. Update Total Score Function
+javascript
+function updateTotalScore() {
+    document.getElementById('totalScore').innerText = `Total Score: ${totalScore}`;
+}
+
+- This function updates the displayed total score based on the current totalScore value.
+- It sets the text content of the totalScore element to the updated total score.
