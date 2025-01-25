@@ -9,15 +9,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // Handle the recognition start/stop button
     document.getElementById("start").addEventListener("click", () => {
         if (isListening) {
-            if (recognition) {
-                recognition.stop();
-            }
-            isListening = false;
-            document.getElementById("start").innerText = "Start Recognition";
+            stopRecognition(); // Stop recognition when clicked
         } else {
-            startRecognition();
-            isListening = true;
-            document.getElementById("start").innerText = "Stop Recognition";
+            startRecognition(); // Start recognition when clicked
         }
     });
 
@@ -39,18 +33,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Handle the "Clear" button
     document.getElementById("clear").addEventListener("click", () => {
-        document.getElementById("textareaInput").value = "";
+        document.getElementById("textareaInput").value = ""; // Clear the textarea
+        currentSessionText = ""; // Reset the current session text
         totalScore = 0;
         document.getElementById("totalScore").textContent = `Total Score: ${totalScore}`;
     });
 
-    // Handle adding to list
-    document.getElementById("inputForm").addEventListener("submit", (event) => {
-        event.preventDefault();
-        addToList();
-    });
-
-    // Handle Save History
+    // Handle Save History button
     document.getElementById("saveHistory").addEventListener("click", () => {
         if (currentSessionText.trim()) {
             historyList.push(currentSessionText.trim()); // Save the current session's recognized text
@@ -68,13 +57,13 @@ document.addEventListener("DOMContentLoaded", () => {
             .then((stream) => {
                 recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
                 recognition.lang = "en-US";
-                recognition.interimResults = false;
-                recognition.continuous = false;
+                recognition.interimResults = true; // Allow interim results
+                recognition.continuous = true; // Allow continuous speech recognition
                 recognition.maxAlternatives = 1;
 
                 recognition.onresult = (event) => {
-                    const transcript = event.results[0][0].transcript;
-                    currentSessionText += ` ${transcript}`;
+                    const transcript = event.results[event.resultIndex][0].transcript;
+                    currentSessionText = transcript; // Clear the old text and set the new text
                     const resultElement = document.getElementById("textareaInput");
                     resultElement.value = currentSessionText; // Update the textarea with the latest recognized text
                     checkMatch();
@@ -86,11 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 recognition.onend = () => {
                     if (isListening) {
-                        setTimeout(() => {
-                            recognition.start();
-                        }, 500);
-                    } else {
-                        console.log("Recognition ended");
+                        recognition.start(); // Restart recognition if it ends unexpectedly (to keep it running)
                     }
                 };
 
@@ -101,6 +86,18 @@ document.addEventListener("DOMContentLoaded", () => {
                 console.error("Error getting user media: ", err.name, err.message);
                 alert("Microphone access is required for speech recognition. Please allow microphone access.");
             });
+
+        isListening = true;
+        document.getElementById("start").innerText = "Stop Recognition"; // Update button text
+    }
+
+    // Stop speech recognition
+    function stopRecognition() {
+        if (recognition && isListening) {
+            recognition.stop(); // Stop recognition
+            isListening = false;
+            document.getElementById("start").innerText = "Start Recognition"; // Update button text
+        }
     }
 
     // Add item to the list
