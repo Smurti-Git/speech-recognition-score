@@ -6,7 +6,7 @@
    
 </head>
 <body>
-   <button id="themeToggle">Enable Dark Mode</button> 
+<button id="themeToggle">Enable Dark Mode</button> 
 <h1>Speech Recognition Score & Task</h1>
   <button id="start" accesskey="r">Start Recognition</button> 
   <button id="copy" accesskey="c">Copy</button> 
@@ -21,19 +21,19 @@
   <aside id="totalScore">Total Score: 0</aside>
   <br> 
   <form id="inputForm" onsubmit="addToList(); return false;">
-    <label for="textInput">Parameters:</label> 
-    <input type="text" id="textInput" name="textInput" required> 
+    <label class="mode" for="textInput">Parameters:</label> 
+    <input class="mode" type="text" id="textInput" name="textInput" required> 
     <br>
-    <label for="numberInput">Score:</label> 
+    <label class="mode" for="numberInput">Score:</label> 
     <input type="number" id="numberInput" name="numberInput" accesskey="s" required> 
     <button type="submit" name="add">Add</button> 
   </form> 
-  <h3>Parameters:</h3>
+  <h3 class="mode">Parameters:</h3>
   <ul id="list"></ul>
 
   <br>
   <aside id="historySection">
-    <h3>History:</h3>
+    <h3 class="mode" >History:</h3>
     <ul id="historyList"></ul>
   </aside>
 
