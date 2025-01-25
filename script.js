@@ -51,6 +51,17 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    // New functionality: Copy all text from the textarea to the text input section
+    document.getElementById("copyToInput").addEventListener("click", () => {
+        const textareaValue = document.getElementById("textareaInput").value;
+        const inputField = document.getElementById("textInput");
+        if (textareaValue.trim()) {
+            inputField.value = textareaValue; // Copy the entire text from textarea to input field
+        } else {
+            alert("No text to copy to input!");
+        }
+    });
+
     // Function to start speech recognition
     function startRecognition() {
         navigator.mediaDevices.getUserMedia({ audio: true })
