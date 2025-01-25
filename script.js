@@ -3,7 +3,10 @@ document.addEventListener("DOMContentLoaded", () => {
     let isListening = false;
     let textList = [];
     let totalScore = 0;
+    let historyList = []; // This will hold all saved texts for history
+    let currentSessionText = ""; // Holds the current session's transcribed text
 
+    // Handle the recognition start/stop button
     document.getElementById("start").addEventListener("click", () => {
         if (isListening) {
             if (recognition) {
@@ -18,6 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    // Handle the "Copy" button
     document.getElementById("copy").addEventListener("click", () => {
         const textToCopy = document.getElementById("textareaInput").value;
         if (textToCopy) {
@@ -33,21 +37,35 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    // Handle the "Clear" button
     document.getElementById("clear").addEventListener("click", () => {
         document.getElementById("textareaInput").value = "";
         totalScore = 0;
         document.getElementById("totalScore").textContent = `Total Score: ${totalScore}`;
     });
 
+    // Handle adding to list
     document.getElementById("inputForm").addEventListener("submit", (event) => {
         event.preventDefault();
         addToList();
     });
 
+    // Handle Save History
+    document.getElementById("saveHistory").addEventListener("click", () => {
+        if (currentSessionText.trim()) {
+            historyList.push(currentSessionText.trim()); // Save the current session's recognized text
+            updateHistorySection(); // Update the history section on the UI
+            currentSessionText = ""; // Clear the current session text
+            document.getElementById("textareaInput").value = ""; // Clear the input field
+        } else {
+            alert("No text to save in history!");
+        }
+    });
+
+    // Function to start speech recognition
     function startRecognition() {
         navigator.mediaDevices.getUserMedia({ audio: true })
             .then((stream) => {
-                console.log("Microphone access granted");
                 recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
                 recognition.lang = "en-US";
                 recognition.interimResults = false;
@@ -56,8 +74,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 recognition.onresult = (event) => {
                     const transcript = event.results[0][0].transcript;
+                    currentSessionText += ` ${transcript}`;
                     const resultElement = document.getElementById("textareaInput");
-                    resultElement.value += ` ${transcript}`;
+                    resultElement.value = currentSessionText; // Update the textarea with the latest recognized text
                     checkMatch();
                 };
 
@@ -84,29 +103,25 @@ document.addEventListener("DOMContentLoaded", () => {
             });
     }
 
+    // Add item to the list
     window.addToList = function() {
         const textInput = document.getElementById('textInput').value.trim();
         const numberInput = document.getElementById('numberInput').value.trim();
-
-        // Validate inputs
         if (textInput === '' || numberInput === '') {
             return;
         }
 
         const listItem = document.createElement('li');
         listItem.className = 'list-item';
-        listItem.innerHTML = `<span class="text">Text: ${textInput}</span> 
-                              <span class="score">Score: ${numberInput}</span> 
-                              <button onclick="removeItem(this)" style="margin-left: 10px;">&#10060;</button>`;
-
+        listItem.innerHTML = `<span class="text">Text: ${textInput}</span> <span class="score">Score: ${numberInput}</span> <button onclick="removeItem(this)" style="margin-left: 10px;">&#10060;</button>`;
         document.getElementById('list').appendChild(listItem);
 
         textList.push({ text: textInput, score: parseInt(numberInput, 10) });
-
         document.getElementById('inputForm').reset();
         updateTotalScore();
     };
 
+    // Remove item from the list
     window.removeItem = function(button) {
         const listItem = button.parentElement;
         const text = listItem.querySelector('.text').innerText.split(': ')[1];
@@ -115,15 +130,14 @@ document.addEventListener("DOMContentLoaded", () => {
         updateTotalScore();
     };
 
+    // Check for matches in textarea and highlight them
     window.checkMatch = function() {
         const textareaValue = document.getElementById('textareaInput').value;
         const listItems = document.querySelectorAll('.list-item');
         totalScore = 0;
-
         listItems.forEach(item => {
             const textValue = item.querySelector('.text').innerText.split(': ')[1];
             const scoreValue = parseInt(item.querySelector('.score').innerText.split(': ')[1], 10);
-
             if (textareaValue.includes(textValue)) {
                 item.classList.add('highlight');
                 totalScore += scoreValue;
@@ -131,11 +145,28 @@ document.addEventListener("DOMContentLoaded", () => {
                 item.classList.remove('highlight');
             }
         });
-
         updateTotalScore();
     };
 
+    // Update total score
     function updateTotalScore() {
         document.getElementById('totalScore').innerText = `Total Score: ${totalScore}`;
     }
+
+    // Update history section with saved history
+    function updateHistorySection() {
+        const historyListElement = document.getElementById('historyList');
+        historyListElement.innerHTML = ''; // Clear existing history list
+        historyList.forEach((text, index) => {
+            const historyItem = document.createElement('li');
+            historyItem.innerHTML = `${text} <button onclick="removeHistory(${index})" style="margin-left: 10px;">&#10060;</button>`;
+            historyListElement.appendChild(historyItem);
+        });
+    }
+
+    // Remove a history item
+    window.removeHistory = function(index) {
+        historyList.splice(index, 1);
+        updateHistorySection();
+    };
 });
