@@ -4,6 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let textList = [];
     let totalScore = 0;
     let historyList = []; // Holds the history of saved texts
+  const themeToggle = document.getElementById('themeToggle');
 
     // Load history from localStorage when the page loads
     loadHistoryFromStorage();
@@ -204,3 +205,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 });
+
+
+
+    themeToggle.addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+      themeToggle.textContent = document.body.classList.contains('dark-mode') ? 'Enable Light Mode' : 'Enable Dark Mode';
+    });
+
