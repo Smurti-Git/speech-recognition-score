@@ -3,8 +3,10 @@ document.addEventListener("DOMContentLoaded", () => {
     let isListening = false;
     let textList = [];
     let totalScore = 0;
-    let historyList = []; // This will hold all saved texts for history
-    let currentSessionText = ""; // Holds the current session's transcribed text
+    let historyList = []; // Holds the history of saved texts
+
+    // Load history from localStorage when the page loads
+    loadHistoryFromStorage();
 
     // Handle the recognition start/stop button
     document.getElementById("start").addEventListener("click", () => {
@@ -34,18 +36,17 @@ document.addEventListener("DOMContentLoaded", () => {
     // Handle the "Clear" button
     document.getElementById("clear").addEventListener("click", () => {
         document.getElementById("textareaInput").value = ""; // Clear the textarea
-        currentSessionText = ""; // Reset the current session text
         totalScore = 0;
         document.getElementById("totalScore").textContent = `Total Score: ${totalScore}`;
     });
 
     // Handle Save History button
     document.getElementById("saveHistory").addEventListener("click", () => {
-        if (currentSessionText.trim()) {
-            historyList.push(currentSessionText.trim()); // Save the current session's recognized text
+        const currentSessionText = document.getElementById("textareaInput").value.trim();
+        if (currentSessionText) {
+            historyList.push(currentSessionText); // Save the current session's recognized text
             updateHistorySection(); // Update the history section on the UI
-            currentSessionText = ""; // Clear the current session text
-            document.getElementById("textareaInput").value = ""; // Clear the input field
+            saveHistoryToStorage(); // Save the updated history to localStorage
         } else {
             alert("No text to save in history!");
         }
@@ -85,10 +86,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     // Only append the final transcribed text to the existing session
                     if (finalTranscript) {
-                        currentSessionText += " " + finalTranscript.trim(); // Append to the session text
                         const resultElement = document.getElementById("textareaInput");
-                        resultElement.value = currentSessionText; // Update the textarea with the final text
-                        checkMatch();
+                        resultElement.value += " " + finalTranscript.trim(); // Append to the textarea with final text
                     }
                 };
 
@@ -186,7 +185,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Remove a history item
     window.removeHistory = function(index) {
-        historyList.splice(index, 1);
-        updateHistorySection();
+        historyList.splice(index, 1); // Remove from the array
+        updateHistorySection(); // Update the UI
+        saveHistoryToStorage(); // Save updated history to localStorage
     };
+
+    // Save the current history to localStorage
+    function saveHistoryToStorage() {
+        localStorage.setItem("historyList", JSON.stringify(historyList));
+    }
+
+    // Load history from localStorage
+    function loadHistoryFromStorage() {
+        const savedHistory = localStorage.getItem("historyList");
+        if (savedHistory) {
+            historyList = JSON.parse(savedHistory);
+            updateHistorySection(); // Update the UI with the loaded history
+        }
+    }
 });
