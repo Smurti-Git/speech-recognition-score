@@ -73,11 +73,23 @@ document.addEventListener("DOMContentLoaded", () => {
                 recognition.maxAlternatives = 1;
 
                 recognition.onresult = (event) => {
-                    const transcript = event.results[event.resultIndex][0].transcript;
-                    currentSessionText = transcript; // Clear the old text and set the new text
-                    const resultElement = document.getElementById("textareaInput");
-                    resultElement.value = currentSessionText; // Update the textarea with the latest recognized text
-                    checkMatch();
+                    let finalTranscript = ""; // To hold only final transcribed text
+
+                    // Process all results (final + interim)
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        let transcript = event.results[i][0].transcript;
+                        if (event.results[i].isFinal) {
+                            finalTranscript = transcript; // Capture only final transcriptions
+                        }
+                    }
+
+                    // Only append the final transcribed text to the existing session
+                    if (finalTranscript) {
+                        currentSessionText += " " + finalTranscript.trim(); // Append to the session text
+                        const resultElement = document.getElementById("textareaInput");
+                        resultElement.value = currentSessionText; // Update the textarea with the final text
+                        checkMatch();
+                    }
                 };
 
                 recognition.onerror = (event) => {
