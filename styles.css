@@ -1,4 +1,14 @@
-    body {
+
+footer {
+  color: #888;
+  font-style: italic;
+}
+body.dark-mode footer {
+  color: #aaa;
+}
+
+
+body {
         font-family: Arial, sans-serif;
         margin: 0;
         padding: 0;
